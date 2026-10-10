@@ -1,0 +1,126 @@
+// Fuente editable del DER. Pegar en https://dbdiagram.io (Import > DBML)
+Project clinica_dental { database_type: 'PostgreSQL' }
+
+Table roles { id_role smallint [pk, increment]  name varchar(30) [unique, not null]  description varchar(200) }
+
+Table users {
+  id_user bigint [pk, increment]
+  id_role smallint [not null, ref: > roles.id_role]
+  full_name varchar(150) [not null]
+  email varchar(255) [unique, not null]
+  phone varchar(30)
+  password_hash varchar(255) [not null]
+  status varchar(10) [not null, default: 'ACTIVE']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table patients {
+  id_patient bigint [pk, increment]
+  id_user bigint [unique, ref: - users.id_user, note: 'opcional']
+  full_name varchar(150) [not null]
+  identification varchar(30) [unique, not null]
+  birth_date date
+  phone varchar(30)
+  email varchar(255)
+  emergency_contact varchar(200)
+  data_consent_at timestamptz
+  status varchar(10) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table specialties { id_specialty smallint [pk, increment]  name varchar(100) [unique, not null]  description varchar(300) }
+
+Table dentists {
+  id_dentist bigint [pk, increment]
+  id_user bigint [unique, not null, ref: - users.id_user]
+  id_specialty smallint [not null, ref: > specialties.id_specialty]
+  license_number varchar(30) [unique, not null]
+  status varchar(10) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table services {
+  id_service bigint [pk, increment]
+  name varchar(120) [unique, not null]
+  description varchar(500)
+  duration_minutes smallint [not null]
+  price numeric(10,2) [not null]
+  status varchar(10) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table dentist_services {
+  id_dentist bigint [not null, ref: > dentists.id_dentist]
+  id_service bigint [not null, ref: > services.id_service]
+  indexes { (id_dentist, id_service) [pk] }
+}
+
+Table dentist_schedules {
+  id_schedule bigint [pk, increment]
+  id_dentist bigint [not null, ref: > dentists.id_dentist]
+  day_of_week smallint [not null, note: '1=lunes ... 7=domingo']
+  start_time time [not null]
+  end_time time [not null]
+}
+
+Table dentist_blocks {
+  id_block bigint [pk, increment]
+  id_dentist bigint [not null, ref: > dentists.id_dentist]
+  starts_at timestamptz [not null]
+  ends_at timestamptz [not null]
+  reason varchar(255)
+}
+
+Table appointments {
+  id_appointment bigint [pk, increment]
+  id_patient bigint [not null, ref: > patients.id_patient]
+  id_dentist bigint [not null, ref: > dentists.id_dentist]
+  id_service bigint [not null, ref: > services.id_service]
+  starts_at timestamptz [not null]
+  ends_at timestamptz [not null]
+  status varchar(15) [not null, default: 'PENDING']
+  price_snapshot numeric(10,2) [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  Note: 'Restriccion de exclusion: sin traslapes por odontologo (ver schema.sql)'
+}
+
+Table appointment_logs {
+  id_log bigint [pk, increment]
+  id_appointment bigint [not null, ref: > appointments.id_appointment]
+  changed_by bigint [not null, ref: > users.id_user]
+  previous_status varchar(15)
+  new_status varchar(15) [not null]
+  changed_at timestamptz [not null]
+  remarks varchar(500)
+}
+
+Table medical_records {
+  id_record bigint [pk, increment]
+  id_appointment bigint [unique, not null, ref: - appointments.id_appointment]
+  symptoms text
+  physical_exam text
+  diagnosis text
+  treatment_plan text
+  prescriptions text
+  clinical_notes text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table notifications {
+  id_notification bigint [pk, increment]
+  id_appointment bigint [not null, ref: > appointments.id_appointment]
+  type varchar(20) [not null]
+  channel varchar(10) [not null, default: 'EMAIL']
+  recipient varchar(255) [not null]
+  status varchar(10) [not null, default: 'PENDING']
+  retry_count smallint [not null, default: 0]
+  scheduled_for timestamptz [not null]
+  sent_at timestamptz
+  created_at timestamptz [not null]
+}
