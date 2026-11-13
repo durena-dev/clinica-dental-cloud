@@ -1,12 +1,14 @@
 -- Fictitious development data (demo text in Spanish, codes in English). Rows are referenced by
 -- natural keys (email, identification, license number, service name), never by generated ids.
 --
--- password_hash is a placeholder, not a valid hash: regenerate it with the API hasher.
--- Logging in with these accounts will not work until then.
+-- password_hash values are BCrypt hashes generated here with pgcrypto. All demo accounts share one
+-- fictitious password, which is not a real credential.
 --
 -- Dates are relative to now(), captured once in seed_context so every statement uses the same
 -- instant even if the script crosses midnight. Local dates use the clinic time zone and skip weekends.
 -- This seed is meant for a freshly created database: it is not re-runnable (roles are unique).
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
 CREATE TEMP TABLE seed_context AS
 SELECT now() AS ts;
@@ -52,7 +54,7 @@ INSERT INTO specialties (name, description) VALUES
 
 -- ---------- Users ----------
 INSERT INTO users (id_role, full_name, email, phone, password_hash, created_at, updated_at)
-SELECT r.id_role, v.full_name, v.email, v.phone, 'NOT_A_REAL_HASH_REGENERATE_WITH_API_HASHER',
+SELECT r.id_role, v.full_name, v.email, v.phone, extensions.crypt('Clinica2026!', extensions.gen_salt('bf', 10)),
        c.ts - interval '60 days', c.ts - interval '60 days'
 FROM (VALUES
   ('ADMIN',        'Carlos Vargas',  'admin@clinica.example',          '8000-0001'),
