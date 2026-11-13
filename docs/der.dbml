@@ -3,7 +3,11 @@
 // The btree_gist extension lives in the extensions schema.
 Project clinica_dental { database_type: 'PostgreSQL' }
 
-Table roles { id_role smallint [pk, increment]  name varchar(30) [unique, not null]  description varchar(200) }
+Table roles {
+  id_role smallint [pk, increment]
+  name varchar(30) [unique, not null]
+  description varchar(200)
+}
 
 Table users {
   id_user bigint [pk, increment]
@@ -32,7 +36,11 @@ Table patients {
   updated_at timestamptz [not null]
 }
 
-Table specialties { id_specialty smallint [pk, increment]  name varchar(100) [unique, not null]  description varchar(300) }
+Table specialties {
+  id_specialty smallint [pk, increment]
+  name varchar(100) [unique, not null]
+  description varchar(300)
+}
 
 Table dentists {
   id_dentist bigint [pk, increment]
