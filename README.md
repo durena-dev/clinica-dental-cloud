@@ -110,7 +110,9 @@ La base de la demo en Supabase se cargó con este mismo `supabase/seed.sql`, as�
 
 ## Base de datos en la nube
 
-La base de datos de la demo está en Supabase, en dos proyectos: `clinica-dental-staging` (pruebas) y `clinica-dental-prod` (producción). Los cambios llegan a esos proyectos mediante el pipeline de GitHub Actions; no se aplican a mano. Las credenciales y cadenas de conexión están solo en los secretos del repositorio y no se documentan aquí.
+La base de datos de la demo está en Supabase, en el proyecto `clinica-dental` (región East US). El esquema se aplicó con la CLI a partir de las migraciones de este repositorio, así que la nube tiene la misma estructura y los mismos datos de prueba que la base local. Las credenciales y la cadena de conexión no se publican en el repositorio.
+
+Próximamente: un proyecto de staging y el despliegue automático de migraciones con GitHub Actions.
 
 ## Flujo de trabajo
 
