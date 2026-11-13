@@ -1,0 +1,2 @@
+*.sql text eol=lf
+*.dbml text eol=lf
