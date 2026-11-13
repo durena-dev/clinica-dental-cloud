@@ -1,4 +1,6 @@
-// Fuente editable del DER. Pegar en https://dbdiagram.io (Import > DBML)
+// Editable source of the ERD. Paste into https://dbdiagram.io (Import > DBML)
+// All tables have RLS enabled with no policies; tables with updated_at refresh it through the set_updated_at() trigger.
+// The btree_gist extension lives in the extensions schema.
 Project clinica_dental { database_type: 'PostgreSQL' }
 
 Table roles { id_role smallint [pk, increment]  name varchar(30) [unique, not null]  description varchar(200) }
@@ -17,7 +19,7 @@ Table users {
 
 Table patients {
   id_patient bigint [pk, increment]
-  id_user bigint [unique, ref: - users.id_user, note: 'opcional']
+  id_user bigint [unique, ref: - users.id_user, note: 'optional']
   full_name varchar(150) [not null]
   identification varchar(30) [unique, not null]
   birth_date date
@@ -25,7 +27,7 @@ Table patients {
   email varchar(255)
   emergency_contact varchar(200)
   data_consent_at timestamptz
-  status varchar(10) [not null]
+  status varchar(10) [not null, default: 'ACTIVE']
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
 }
@@ -37,7 +39,7 @@ Table dentists {
   id_user bigint [unique, not null, ref: - users.id_user]
   id_specialty smallint [not null, ref: > specialties.id_specialty]
   license_number varchar(30) [unique, not null]
-  status varchar(10) [not null]
+  status varchar(10) [not null, default: 'ACTIVE']
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
 }
@@ -48,7 +50,7 @@ Table services {
   description varchar(500)
   duration_minutes smallint [not null]
   price numeric(10,2) [not null]
-  status varchar(10) [not null]
+  status varchar(10) [not null, default: 'ACTIVE']
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
 }
@@ -62,9 +64,10 @@ Table dentist_services {
 Table dentist_schedules {
   id_schedule bigint [pk, increment]
   id_dentist bigint [not null, ref: > dentists.id_dentist]
-  day_of_week smallint [not null, note: '1=lunes ... 7=domingo']
+  day_of_week smallint [not null, note: '1 = Monday ... 7 = Sunday (ISO), clinic local time']
   start_time time [not null]
   end_time time [not null]
+  indexes { (id_dentist, day_of_week, start_time) [unique, name: 'dentist_schedules_slot_unique'] }
 }
 
 Table dentist_blocks {
@@ -73,39 +76,46 @@ Table dentist_blocks {
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
   reason varchar(255)
+  Note: 'Exclusion constraint dentist_blocks_no_overlap: no overlapping blocks per dentist'
 }
 
 Table appointments {
   id_appointment bigint [pk, increment]
   id_patient bigint [not null, ref: > patients.id_patient]
-  id_dentist bigint [not null, ref: > dentists.id_dentist]
-  id_service bigint [not null, ref: > services.id_service]
+  id_dentist bigint [not null]
+  id_service bigint [not null]
   starts_at timestamptz [not null]
   ends_at timestamptz [not null]
-  status varchar(15) [not null, default: 'PENDING']
+  status varchar(15) [not null, default: 'PENDING', note: 'PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW']
   price_snapshot numeric(10,2) [not null]
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
-  Note: 'Restriccion de exclusion: sin traslapes por odontologo (ver schema.sql)'
+  indexes {
+    (id_dentist, starts_at) [name: 'idx_appointments_dentist_start']
+    (id_patient, starts_at) [name: 'idx_appointments_patient_start']
+    (starts_at, status) [name: 'idx_appointments_start_status']
+  }
+  Note: 'Exclusion constraint appointments_no_overlap: no overlapping non-cancelled appointments per dentist. Composite FK (id_dentist, id_service) -> dentist_services'
 }
 
 Table appointment_logs {
   id_log bigint [pk, increment]
   id_appointment bigint [not null, ref: > appointments.id_appointment]
   changed_by bigint [not null, ref: > users.id_user]
-  previous_status varchar(15)
-  new_status varchar(15) [not null]
+  previous_status varchar(15) [note: 'NULL on creation; same values as appointments.status']
+  new_status varchar(15) [not null, note: 'same values as appointments.status']
   changed_at timestamptz [not null]
   remarks varchar(500)
+  indexes { id_appointment [name: 'idx_appointment_logs_appointment'] }
 }
 
 Table medical_records {
   id_record bigint [pk, increment]
   id_appointment bigint [unique, not null, ref: - appointments.id_appointment]
   symptoms text
-  physical_exam text
-  diagnosis text
-  treatment_plan text
+  physical_exam text [not null]
+  diagnosis text [not null]
+  treatment_plan text [not null]
   prescriptions text
   clinical_notes text
   created_at timestamptz [not null]
@@ -118,9 +128,14 @@ Table notifications {
   type varchar(20) [not null]
   channel varchar(10) [not null, default: 'EMAIL']
   recipient varchar(255) [not null]
-  status varchar(10) [not null, default: 'PENDING']
-  retry_count smallint [not null, default: 0]
+  status varchar(10) [not null, default: 'PENDING', note: 'PENDING, SENT, FAILED, CANCELLED']
+  retry_count smallint [not null, default: 0, note: 'CHECK notifications_retry_count_check: retry_count >= 0']
   scheduled_for timestamptz [not null]
   sent_at timestamptz
   created_at timestamptz [not null]
+  indexes {
+    scheduled_for [name: 'idx_notifications_pending', note: 'partial: WHERE status = PENDING']
+  }
 }
+
+Ref appointments_dentist_service_fkey: appointments.(id_dentist, id_service) > dentist_services.(id_dentist, id_service)
