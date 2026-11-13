@@ -1,14 +1,34 @@
-# Sistema web para consultorios dentales
+# Sistema web para consultorios dentales — Base de datos
 
 Aplicación web para gestionar pacientes, odontólogos, servicios, citas, expediente clínico, notificaciones y reportes de una clínica dental.
 
 **Curso:** Desarrollo de Aplicaciones para la Computación en la Nube (16-0550), ULACIT, III Cuatrimestre 2026  
 **Profesora:** Karol Leal  
-**Estado:** Avance 1 (propuesta y diseño). El código del backend y del frontend se agrega a partir del Avance 2.  
+**Estado:** en desarrollo.  
 **Aplicación desplegada:** _pendiente_
 
-<!-- Badge de CI/CD (se agrega cuando exista el workflow):
-![CI](https://github.com/<organizacion>/<repositorio>/actions/workflows/ci.yml/badge.svg) -->
+## Qué es este repositorio
+
+Este repositorio es la **base de datos** del sistema. Contiene:
+
+- Las migraciones SQL: cada cambio en la estructura es un archivo versionado.
+- Los datos ficticios de desarrollo (`supabase/seed.sql`).
+- Las pruebas pgTAP que verifican las reglas de negocio dentro de la base.
+- El pipeline que aplica los cambios a los proyectos de Supabase.
+
+El API y el frontend viven en sus propios repositorios:
+
+- API: https://github.com/Diegoalru/clinica-dental-api-cloud
+- Frontend: https://github.com/Diegoalru/clinica-dental-web-cloud
+
+## Stack tecnológico
+
+| Capa | Tecnología |
+|---|---|
+| Base de datos | PostgreSQL administrado en Supabase |
+| Herramientas de BD | Supabase CLI, pgTAP, GitHub Actions |
+| API | ASP.NET Core 10 Web API, Entity Framework Core + Npgsql, JWT, Swagger/OpenAPI |
+| Frontend | React con Vite, React Router, Axios, Tailwind CSS |
 
 ## Equipo
 
@@ -20,84 +40,87 @@ Aplicación web para gestionar pacientes, odontólogos, servicios, citas, expedi
 | [Integrante 4] | Datos y calidad |
 | [Integrante 5] | [Rol] |
 
-## Stack tecnológico
-
-Las versiones exactas se confirman al crear los proyectos.
-
-| Capa | Tecnología |
-|---|---|
-| Frontend | React con Vite, React Router, Axios, Tailwind CSS |
-| Backend | ASP.NET Core 8 Web API, Entity Framework Core, JWT, Swagger/OpenAPI |
-| Base de datos | PostgreSQL gestionado en Supabase |
-| Contenedores | Docker y Docker Compose |
-| Nube | Azure for Students: Static Web Apps, Container Apps y Functions |
-| CI/CD y calidad | GitHub Actions, ESLint, xUnit, Conventional Commits |
-
 ## Arquitectura
 
 ![Arquitectura cloud](docs/arquitectura.png)
 
-La API es un backend modular y sin estado; los recordatorios de citas los envía una función programada. Las decisiones de diseño están en `docs/Avance1_Propuesta.pdf`.
+La API es un backend modular y sin estado; los recordatorios de citas los envía una función programada.
 
 ## Estructura del repositorio
 
 ```
-backend/     API REST (ASP.NET Core)
-frontend/    Aplicación web (React + Vite)
-database/    schema.sql (esquema PostgreSQL) y seed.sql (datos ficticios)
-docs/        DER, diagramas de flujo, arquitectura y documento de propuesta
-.github/     Plantilla de pull request y workflows de CI/CD
+supabase/
+├── config.toml          configuración de Supabase CLI
+├── migrations/          migraciones SQL, una por cambio de estructura
+├── seed.sql             datos ficticios de desarrollo
+└── tests/
+    └── database/        pruebas pgTAP (*.test.sql)
+docs/                    DER, diagramas de flujo y arquitectura
 ```
 
-## Instalación local
+> Nota: la carpeta `database/` contiene el esquema y los datos del Avance 1. Es un resto que se eliminará, porque la fuente de verdad ahora es `supabase/`.
 
-> Disponible a partir del Avance 2.
+## Levantar la base de datos local
 
-```bash
-# Clonar el repositorio
-git clone <url-del-repositorio>
-cd clinica-dental-cloud
+Requisitos en Windows:
 
-# Variables de entorno necesarias
-cp .env.example .env
+1. **Docker Desktop**, abierto y en ejecución. Supabase local corre en contenedores.
+2. **Supabase CLI**, instalada con Scoop:
 
-# Construcción y ejecución con Docker
-docker-compose up --build
+   ```powershell
+   scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+   scoop install supabase
+   ```
+
+3. Clonar el repositorio:
+
+   ```powershell
+   git clone https://github.com/durena-dev/clinica-dental-cloud.git
+   cd clinica-dental-cloud
+   ```
+
+Comandos principales (PowerShell, desde la carpeta del repositorio):
+
+```powershell
+supabase start      # levanta el stack local (la primera vez descarga imágenes y tarda)
+supabase db reset   # borra la BD local, aplica todas las migraciones y el seed
+supabase test db    # corre las pruebas pgTAP
+supabase stop       # apaga los contenedores al terminar
 ```
 
-## Variables de entorno
-
-Están descritas en [`.env.example`](.env.example). El archivo `.env` real nunca se sube al repositorio.
-
-## Base de datos
-
-El esquema está en [`database/schema.sql`](database/schema.sql) y los datos ficticios de prueba en [`database/seed.sql`](database/seed.sql). Requiere PostgreSQL 15 o superior (usa la extensión `btree_gist`).
-
-```bash
-psql "$DATABASE_URL" -f database/schema.sql
-psql "$DATABASE_URL" -f database/seed.sql
-```
-
-## Despliegue
-
-_Se documenta en el Avance 2: pasos para replicar el despliegue en Azure y configuración de Supabase._
+`supabase status` muestra las URLs locales (incluida la de Studio, el panel para ver tablas y datos) y las credenciales de la base local.
 
 ## Credenciales de prueba
 
-_Se definen junto con los usuarios de demostración._
+Las cuentas están en `supabase/seed.sql` y se crean al ejecutar `supabase db reset`. **Son datos ficticios de demostración**, no son credenciales reales.
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| Administrador | _pendiente_ | _pendiente_ |
-| Usuario estándar | _pendiente_ | _pendiente_ |
+Contraseña de todas las cuentas: `Clinica2026!`
+
+La base de la demo en Supabase se cargó con este mismo `supabase/seed.sql`, así que estas cuentas funcionan allí con la misma contraseña, igual que en la base local.
+
+| Rol | Correo |
+|---|---|
+| ADMIN | admin@clinica.example |
+| RECEPTIONIST | recepcion@clinica.example |
+| DENTIST | ana.mora@clinica.example |
+| DENTIST | luis.rojas@clinica.example |
+| DENTIST | marta.vega@clinica.example |
+| PATIENT | sofia.castro@clinica.example |
+| PATIENT | mateo.jimenez@clinica.example |
+
+## Base de datos en la nube
+
+La base de datos de la demo está en Supabase, en dos proyectos: `clinica-dental-staging` (pruebas) y `clinica-dental-prod` (producción). Los cambios llegan a esos proyectos mediante el pipeline de GitHub Actions; no se aplican a mano. Las credenciales y cadenas de conexión están solo en los secretos del repositorio y no se documentan aquí.
 
 ## Flujo de trabajo
 
 Ver [CONTRIBUTING.md](CONTRIBUTING.md): ramas cortas, Conventional Commits y pull requests con revisión de otro integrante.
 
+Los cambios de estructura se hacen siempre con una migración nueva (`supabase migration new <nombre>`). Nunca se edita una migración que ya está en `main`.
+
 ## Documentación
 
-- [Propuesta del Avance 1](docs/Avance1_Propuesta.pdf)
 - [Diagrama entidad-relación](docs/DER.png) (fuente editable: [der.dbml](docs/der.dbml), se abre en dbdiagram.io)
 - [Flujo de agendamiento](docs/flujo-agendamiento.png)
 - [Flujo de atención y expediente](docs/flujo-atencion.png)
+- [Arquitectura](docs/arquitectura.png)
