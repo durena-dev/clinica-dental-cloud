@@ -58,8 +58,6 @@ supabase/
 docs/                    DER, diagramas de flujo y arquitectura
 ```
 
-> Nota: la carpeta `database/` contiene el esquema y los datos del Avance 1. Es un resto que se eliminará, porque la fuente de verdad ahora es `supabase/`.
-
 ## Levantar la base de datos local
 
 Requisitos en Windows:
