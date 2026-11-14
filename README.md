@@ -5,8 +5,7 @@ Aplicación web para gestionar pacientes, odontólogos, servicios, citas, expedi
 **Curso:** Desarrollo de Aplicaciones para la Computación en la Nube (16-0550), ULACIT, III Cuatrimestre 2026  
 **Profesora:** Karol Leal  
 **Estado:** en desarrollo.  
-**Aplicación desplegada:** _pendiente_
-
+**Demo:** la base de datos está en Supabase (nube); el API y el frontend se ejecutan localmente según sus README.
 ## Qué es este repositorio
 
 Este repositorio es la **base de datos** del sistema. Contiene:
@@ -14,7 +13,6 @@ Este repositorio es la **base de datos** del sistema. Contiene:
 - Las migraciones SQL: cada cambio en la estructura es un archivo versionado.
 - Los datos ficticios de desarrollo (`supabase/seed.sql`).
 - Las pruebas pgTAP que verifican las reglas de negocio dentro de la base.
-- El pipeline que aplica los cambios a los proyectos de Supabase.
 
 El API y el frontend viven en sus propios repositorios:
 
@@ -26,25 +24,15 @@ El API y el frontend viven en sus propios repositorios:
 | Capa | Tecnología |
 |---|---|
 | Base de datos | PostgreSQL administrado en Supabase |
-| Herramientas de BD | Supabase CLI, pgTAP, GitHub Actions |
-| API | ASP.NET Core 10 Web API, Entity Framework Core + Npgsql, JWT, Swagger/OpenAPI |
+| Herramientas de BD | Supabase CLI, pgTAP |
+| API | ASP.NET Core 10 Web API, Entity Framework Core + Npgsql, JWT, OpenAPI (Scalar) |
 | Frontend | React con Vite, React Router, Axios, Tailwind CSS |
-
-## Equipo
-
-| Integrante | Rol principal |
-|---|---|
-| [Integrante 1] | Coordinación y producto |
-| [Integrante 2] | Backend y seguridad |
-| [Integrante 3] | Frontend y experiencia |
-| [Integrante 4] | Datos y calidad |
-| [Integrante 5] | [Rol] |
 
 ## Arquitectura
 
 ![Arquitectura cloud](docs/arquitectura.png)
 
-La API es un backend modular y sin estado; los recordatorios de citas los envía una función programada.
+La API es un backend modular y sin estado; los recordatorios de citas los enviará una función programada (planificada).
 
 ## Estructura del repositorio
 
